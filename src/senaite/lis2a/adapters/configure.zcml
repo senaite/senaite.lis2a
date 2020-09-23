@@ -1,0 +1,19 @@
+<configure
+  xmlns="http://namespaces.zope.org/zope"
+  i18n_domain="senaite.lis2a">
+
+  <!-- Adapter to handle pushes -->
+  <adapter
+    name="senaite.lis2a.import"
+    factory=".PushConsumer"
+    provides="senaite.jsonapi.interfaces.IPushConsumer"
+    for="*" />
+
+  <!-- Adapter for async processing of messages import -->
+  <adapter
+    name="task_senaite_lis2a_import"
+    factory=".QueuedMessageImporter"
+    provides=".IQueuedTaskAdapter"
+    for="*" />
+
+</configure>

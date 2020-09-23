@@ -1,0 +1,38 @@
+<configure
+    xmlns="http://namespaces.zope.org/zope"
+    xmlns:five="http://namespaces.zope.org/five"
+    xmlns:genericsetup="http://namespaces.zope.org/genericsetup"
+    i18n_domain="senaite.lis2a">
+
+  <five:registerPackage package="." initialize=".initialize"/>
+
+  <!-- Package includes -->
+  <include package=".adapters" />
+
+  <!-- Default profile -->
+  <genericsetup:registerProfile
+      name="default"
+      title="SENAITE LIS2A"
+      directory="profiles/default"
+      description="CLIS LIS2-A results import for SENAITE"
+      pre_handler="senaite.lis2a.setuphandlers.pre_install"
+      post_handler="senaite.lis2a.setuphandlers.post_install"
+      provides="Products.GenericSetup.interfaces.EXTENSION" />
+
+  <!-- Generic Setup Handler -->
+  <genericsetup:importStep
+      name="senaite.lis2a.setuphandler"
+      title="SENAITE.LIS2A Setup Handler"
+      description="Run various configuration actions"
+      handler="senaite.lis2a.setuphandlers.setup_handler"/>
+
+  <!-- Uninstall profile -->
+  <genericsetup:registerProfile
+      name="uninstall"
+      title="SENAITE LIS2A (uninstall)"
+      directory="profiles/uninstall"
+      description="Asynchronous tasks for SENAITE"
+      post_handler="senaite.lis2a.setuphandlers.post_uninstall"
+      provides="Products.GenericSetup.interfaces.EXTENSION" />
+
+</configure>

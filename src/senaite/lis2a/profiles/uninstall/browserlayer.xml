@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<layers>
+  <layer name="senaite.lis2a"
+         interface="senaite.lis2a.interfaces.ISenaiteLis2aLayer"
+         remove="true" />
+</layers>

@@ -1,0 +1,48 @@
+{
+  "id": "AbbottM2000",
+  "extends": "LIS2-A2",
+  "selection_criteria": {
+      "H.SenderName": "m2000"
+  },
+  "result_criteria": {
+      "R.ResultType": "F"
+  },
+  "mappings": {
+      "id": [
+          "O.SpecimenID",
+          "O.LocationID",
+          "O.InstrumentSpecimenID",
+          "O.InstrumentLocationID"
+      ],
+      "keyword": [
+          "R.TestID",
+          "R.AssayName"
+      ],
+      "result": "R.Measurement",
+      "capture_date": "R.DateTimeCompleted",
+      "captured_by": [
+          "R.OperatorIdentification",
+          "R.VerifierIdentification"
+      ]
+  },
+  "H": {
+      "SenderName": [4, 0]
+  },
+  "O": {
+      "SpecimenID": [2, 0],
+      "LocationID": [2, 1],
+      "Position": [2, 2],
+      "InstrumentSpecimenID": [3, 0],
+      "InstrumentLocationID": [3, 1],
+      "InstrumentPosition": [3, 2],
+      "TestID": [4, 3],
+      "AssayName": [4, 4]
+  },
+  "R": {
+      "TestID": [2, 3],
+      "AssayName": [2, 4],
+      "AssayProtocol": [2, 5],
+      "TestQualifier": [2, 6],
+      "ResultType": [2, 8]
+  }
+}

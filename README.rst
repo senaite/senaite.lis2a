@@ -23,6 +23,8 @@ CLIS LIS2-A results import for SENAITE
 About
 -----
 
+**NOT READY FOR PRODUCTION**
+
 This add-on enables the import of data compliant with the industry supported
 standard CLSI (`Clinical and Laboratory Standards Institute`_, formerly NCCLS)
 `LIS2-A2`_ *"Specification for Transferring Information Between Clinical

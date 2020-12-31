@@ -68,14 +68,14 @@ def import_result(data):
     original_result = analysis.getResult()
 
     if data.get("remove_interims"):
-        # Purge interims
+        # Purge interim fields
         analysis.setInterimFields([])
 
     else:
-        # Purge non-existent interims and fill others
-        interims = get_interims_for(analysis, data)
-        if interims:
-            analysis.setInterimFields(interims)
+        # Purge non-existent interim fields and fill others
+        interim_fields = get_interims_for(analysis, data)
+        if interim_fields:
+            analysis.setInterimFields(interim_fields)
             analysis.calculateResult(override=True)
 
     # If no result has been calculated, set the result directly
@@ -192,7 +192,7 @@ def search_analysis_container(container_ids):
     if sample:
         return api.get_object(sample[0])
 
-    # Try by Worksheet ID (only open and active samples)
+    # Try by Worksheet ID (only open worksheets)
     query = dict(portal_type="Worksheet", review_state="open",
                  getId=container_ids)
     worksheet = api.search(query, CATALOG_WORKSHEET_LISTING)

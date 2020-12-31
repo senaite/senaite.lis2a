@@ -43,10 +43,6 @@ except Exception:
 # ID of the results import task for the queue
 QUEUE_TASK_ID = "task_senaite_lis2a_import"
 
-# Priority of this task over others. Default priority for vanilla queued tasks
-# is 10. Lowest value means higher priority
-QUEUE_TASK_PRIORITY = 50
-
 
 _marker = object()
 
@@ -67,14 +63,19 @@ def queue_import(messages):
     if not is_queue_available():
         raise RuntimeError("Cannot queue message. SENAITE.QUEUE not available")
 
+    if not messages:
+        return False
+
     if isinstance(messages, six.string_types):
         messages = (messages, )
 
-    request = api.get_request()
     context = api.get_setup().bika_instruments
-    params = {"messages": messages}
-    return queueapi.queue_task(QUEUE_TASK_ID, request, context,
-                               priority=QUEUE_TASK_PRIORITY, **params)
+    params = {
+        "messages": messages,
+        "priority": 50,
+        "ghost": True,
+    }
+    return queueapi.add_task(QUEUE_TASK_ID, context, **params)
 
 
 def import_message(message, interpreter=None):
@@ -109,7 +110,6 @@ def extract_results(message, interpreter=None):
     interpreter.read(message)
     results_data = interpreter.get_results_data()
     interpreter.close()
-    import pdb;pdb.set_trace()
     return results_data
 
 
@@ -160,7 +160,7 @@ def get_interpreter(id):
 
 
 def get_builtin_interpreters():
-    """Returns the built-in interpreters
+    """Returns the built-in interpreters that are compliant with standards
     """
     configs = [lis2a2.CONFIGURATION, ]
     return map(Interpreter, configs)

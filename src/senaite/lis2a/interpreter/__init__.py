@@ -95,22 +95,18 @@ class Interpreter(dict):
             raise ValueError("No position set for key {}".format(key))
         return position
 
-    def get_message_value(self, key, first_only=True):
-        """Returns the value for the key passed-in from the whole message. If
-        multiple records for the key passed-in, the value from the first record
-        found is returned
+    def get_message_values(self, key):
+        """Returns the values for the key passed-in from the whole message
+        :param key: <record_type>.<field_name> (O.SpecimenID, H.SenderName,..)
+        :return: a list of values that match with the key passed in.
         """
         # Get the key of the record to look at
         record_type = self.get_record_type(key)
 
-        # Get the first record for this record_type
+        # Get the records for this record type
         records = msgapi.get_records(self.message, record_type)
         if not records:
-            return None
-
-        # Do not look in all records, only the first
-        if first_only:
-            return self.get_record_value(key, records[0])
+            return []
 
         # Return the real value from the records
         values = map(lambda r: self.get_record_value(key, r), records)
@@ -127,8 +123,20 @@ class Interpreter(dict):
         return msgapi.get_value_at(record, position, **delimiters)
 
     def supports(self, message):
-        """Returns whether the current interpreter can be used for the
-        interpretation of the message passed in
+        """Returns whether the current interpreter supports the message, based
+        on the "selection_criteria" setting.
+
+        If the selection criteria for current interpreter contains a list, the
+        function returns True only if all criteria are met.
+
+        Likewise, if a selection criteria maps to more than one record from the
+        message, the target value from all records must match with the criteria.
+
+        If the expected value of a selection criteria is a list, the message
+        value must match with at least one of the items of the list (OR).
+
+        :param message: message to evaluate against the selection criteria
+        :return: true if current interpreter supports the message provided
         """
         if not self.selection_criteria:
             raise ValueError("No selection criteria set")
@@ -138,19 +146,28 @@ class Interpreter(dict):
 
         if msgapi.is_composite(message):
             # This interpreter cannot handle multi-(O)rder messages
+            # In accordance with LIS2-A2, the SampleID/SpecimenID is stored in
+            # (O)rder record (SpecimenID and InstrumentSpecimenID fields) and
+            # we expect all (R)esult records from this message to belong to the
+            # same specimen
             return False
 
-        # The definition can handle the message only if all criteria are met
+        # Read the message with current interpreter
         self.read(message)
-        supported = True
+
+        # The interpreter can handle the message only if all criteria are met
+        supported = False
         for key, expected_value in self.selection_criteria.items():
 
-            # Get the real value from the message
-            value = self.get_message_value(key, message)
+            # Get the message values for the key (<record_type>.<field_name>)
+            values = self.get_message_values(key)
 
-            # Compare with the expected value
-            if not self.match(value, expected_value):
-                supported = False
+            # All values must match with the expected value. If the expected
+            # value is a list, the value must match with at least one of the
+            # expected values
+            matches = map(lambda v: self.match(v, expected_value), values)
+            supported = all(matches)
+            if not supported:
                 break
 
         self.close()
@@ -221,54 +238,50 @@ class Interpreter(dict):
             raise ValueError("Mapping '{}' is missing".format(mapping_id))
         return key
 
-    def get_mapped_value(self, mapping_id, record, unique=False):
-        """Return the mapped value for the mapping id passed in
+    def get_mapped_values(self, mapping_id, record):
+        """Return a list with the mapped values for the mapping id passed in
         """
         key = self.get_mapped_keys(mapping_id)
         if self.is_field_key(key):
-            value = self.get_record_value(key, record)
-            if not unique:
-                value = filter(None, [value, ])
-
-        elif unique:
-            raise ValueError("Mapping '{}' must be unique".format(mapping_id))
-
+            value = [self.get_record_value(key, record)]
         else:
             value = map(lambda k: self.get_record_value(k, record), key)
-            value = filter(None, value)
-
-        return value
+        return filter(None, value)
 
     def get_result_value(self, record):
         """Returns the mapped result value from the record in accordance with
         the configuration set for this interpreter
         """
-        return self.get_mapped_value("result", record, unique=True)
+        values = self.get_mapped_values("result", record)
+        if values:
+            # TODO Return the first one
+            return values[0]
+        return None
 
     def get_analysis_keywords(self, record):
         """Returns the mapped analysis keyword(s) from the record in accordance
         with the configuration set for this interpreter
         """
-        return self.get_mapped_value("keyword", record)
+        return self.get_mapped_values("keyword", record)
 
     def get_capture_date(self, record):
         """Returns the mapped capture date from the record, in accordance with
         the configuration set for this interpreter
         """
-        capture_date = self.get_mapped_value("capture_date", record)
-        # If more than one found, pick the first one
-        if capture_date:
-            capture_date = capture_date[0]
-        return capture_date and capture_date[0] or None
+        # Sort them (ANSI X3.30.2 format) and return the last one
+        capture_dates = self.get_mapped_values("capture_date", record)
+        capture_dates.sort()
+        return capture_dates and capture_dates[-1] or None
 
     def get_sample_ids(self):
         """Returns the mapped sample ids from the message, in accordance with
         the configuration set for this interpreter
         """
-        keys = self.get_mapped_keys("id")
+        sample_id_keys = self.get_mapped_keys("id")
 
-
-        return self.get_message_value("id", first_only=True)
+        # Return the sample ids found for the mapped keys
+        sample_ids = map(self.get_message_values, sample_id_keys)
+        return list(itertools.chain.from_iterable(sample_ids))
 
     def is_field_key(self, thing):
         """Returns whether the thing is a field key or not
@@ -277,32 +290,35 @@ class Interpreter(dict):
             self.split_key(thing)
             return True
         except ValueError:
-            return False
+            pass
+        return False
 
     def to_result_data(self, result_record, interim_records):
         """Returns a dict representing the result data information
         """
         # Get the potential sample ids from this message
-        import pdb;pdb.set_trace()
-        sample_id = self.get_sample_ids()
+        # Current message is for one specimen/sample only, but different ids
+        # for finding matches in SENAITE might be provided (worksheet id,
+        # sample id, client sample id, etc.)
+        sample_ids = self.get_sample_ids()
 
         def resolve_result_mappings(record):
             capture_date = self.get_capture_date(record)
             capture_date = self.to_date(capture_date, default=datetime.now())
             return {
-                "id": sample_id,
+                "id": sample_ids,
                 "keyword": self.get_analysis_keywords(record),
                 "result": self.get_result_value(record),
                 "capture_date": capture_date,
             }
 
         def resolve_interim_mappings(interim_record):
-            interims = []
+            interim_fields = []
             result = self.get_result_value(interim_record)
             keywords = self.get_analysis_keywords(interim_record)
             for keyword in keywords:
-                interims.append({keyword: result})
-            return interims
+                interim_fields.append({keyword: result})
+            return interim_fields
 
         # Resolve mappings for result
         data = resolve_result_mappings(result_record)
@@ -311,17 +327,17 @@ class Interpreter(dict):
         if not all([data["id"], data["keyword"]]):
             return {}
 
-        # Resolve mappings for interims
-        interims_data = {}
-        interims_list = map(resolve_interim_mappings, interim_records)
-        interims_list = list(itertools.chain.from_iterable(interims_list))
+        # Resolve mappings for interim fields
+        interim_data = {}
+        interim_list = map(resolve_interim_mappings, interim_records)
+        interim_list = list(itertools.chain.from_iterable(interim_list))
 
         # Convert the list of interim dicts to a single dict
-        for interim in interims_list:
-            interims_data.update(interim)
+        for interim in interim_list:
+            interim_data.update(interim)
 
         # Update the results record with interims
-        data.update({"interims": interims_data})
+        data.update({"interims": interim_data})
 
         # Inject additional options (e.g. remove_interims)
         data.update(self.get("options", {}))
@@ -343,7 +359,7 @@ class Interpreter(dict):
 
         results_data = []
         for record in result_records:
-            # Include the rest of result records as interims
+            # Include the rest of result records as interim fields
             interim_records = filter(lambda r: r != record, result_records)
 
             # Generate the result data dict

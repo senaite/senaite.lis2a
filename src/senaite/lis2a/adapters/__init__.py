@@ -31,6 +31,7 @@ from zope.interface import Interface
 try:
     from senaite.queue.interfaces import IQueuedTaskAdapter
     from senaite.queue import api as queueapi
+    from senaite.queue.queue import get_chunks_for
 except:
     IQueuedTaskAdapter = Interface
     queueapi = None
@@ -47,6 +48,9 @@ class PushConsumer(object):
     def process(self):
         """Processes the LIS2-A compliant message. Feeds senaite.queue if
         installed and active. Import the message without delay otherwise
+
+        Each message is a record as defined by Specification E 1394, made of
+        multiple frames
         """
         # Extract the full LIS2-A messages from the data
         messages = self.data.get("messages")
@@ -91,10 +95,11 @@ class QueuedMessageImporter(object):
     def process(self, task):
         """Process the messages from the task
         """
+        messages = task.get("messages", [])
         if queueapi:
             # If there are too many objects to process, split them in chunks to
             # prevent the task to take too much time to complete
-            chunks = queueapi.get_chunks(task)
+            chunks = get_chunks_for(task, items=messages)
 
             # Process the first chunk
             map(_api.import_message, chunks[0])
@@ -104,4 +109,4 @@ class QueuedMessageImporter(object):
 
         else:
             # Process all them
-            map(_api.import_message, task.items)
+            map(_api.import_message, messages)

@@ -29,7 +29,8 @@ def is_compliant(message):
         if header:
             return True
     except ValueError:
-        return False
+        pass
+    return False
 
 
 def is_composite(message):

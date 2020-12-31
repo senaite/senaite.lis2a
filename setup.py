@@ -29,6 +29,7 @@ setup(
     install_requires=[
         "setuptools",
         "senaite.lims>=1.3.4",
+        "senaite.lims<2",
         # IPushConsumer adapter was not introduced until Sept-2020
         # https://github.com/senaite/senaite.jsonapi/pull/41
         "senaite.jsonapi>=1.2.3",

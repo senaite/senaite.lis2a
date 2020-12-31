@@ -37,7 +37,7 @@ try:
     from senaite.queue import api as queueapi
     from senaite.queue import is_installed as is_queue_installed
 except Exception:
-    queue = None
+    queueapi = None
     is_queue_installed = None
 
 # ID of the results import task for the queue
@@ -99,7 +99,7 @@ def extract_results(message, interpreter=None):
     if msgapi.is_composite(message):
         messages = msgapi.split_message(message)
         results = map(lambda m: extract_results(m, interpreter), messages)
-        return any(list(itertools.chain.from_iterable(results)))
+        return list(itertools.chain.from_iterable(results))
 
     if not interpreter:
         # Look for a suitable interpreter

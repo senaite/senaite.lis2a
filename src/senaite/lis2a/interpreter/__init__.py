@@ -38,8 +38,8 @@ class Interpreter(dict):
         extends = configuration.get("extends")
         if extends:
             # This configuration extends from another
-            from senaite.lis2a.api import get_interpreter
-            base_configuration = get_interpreter(extends)
+            from senaite.lis2a.api import get_builtin_interpreters
+            base_configuration = get_builtin_interpreters()[0]
             if not base_configuration:
                 raise ValueError("No interpreter found for {}".format(extends))
 

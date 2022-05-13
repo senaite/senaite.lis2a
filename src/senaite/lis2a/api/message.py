@@ -141,13 +141,13 @@ def get_value_at(record, position, field_delimiter="|",
     # Split the record by field delimiter
     field = record.split(field_delimiter)
     if len(field) <= position[0]:
-        raise ValueError("No field at position {}".format(position[0]))
+        raise ValueError("Missing field at position {}".format(position[0]))
     field = field[position[0]]
 
     # Split the field by component delimiter
     components = field.split(component_delimiter)
     if len(components) <= position[1]:
-        raise ValueError("No component at position {}".format(position))
+        raise ValueError("Missing component at position {}".format(position))
 
     return components[position[1]]
 

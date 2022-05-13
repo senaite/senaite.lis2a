@@ -68,7 +68,10 @@ def get_objects(portal_type, **kwargs):
     """
     query = kwargs and kwargs or {}
     query.update({"portal_type": portal_type})
-    return map(_api.get_object, _api.search(query, "uid_catalog"))
+    catalog_id = "uid_catalog"
+    if "catalog" in query:
+        catalog_id = query.pop("catalog")
+    return map(_api.get_object, _api.search(query, catalog_id))
 
 
 def get_object(portal_type, **kwargs):
@@ -76,7 +79,7 @@ def get_object(portal_type, **kwargs):
     return objs and objs[0] or None
 
 
-def create_sample(**kwargs):
+def create_sample(keywords=None, **kwargs):
     """Creates a new sample
     """
     values = kwargs and kwargs or {}
@@ -97,8 +100,9 @@ def create_sample(**kwargs):
         services = values.pop("services")
 
     if not services:
-        services = map(_api.get_uid, get_objects("AnalysisService"))
+        services = get_objects("AnalysisService")
 
+    services = map(_api.get_uid, services)
     client = _api.get_object_by_uid(values.get("Client"))
     sample = create_analysisrequest(client, request, values, services)
     return sample

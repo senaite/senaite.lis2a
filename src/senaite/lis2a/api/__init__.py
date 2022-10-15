@@ -18,19 +18,19 @@
 # Copyright 2020 by it's authors.
 # Some rights reserved, see README and LICENSE.
 
-import itertools
-import json
 from os.path import isfile
+from os.path import join
 
 import analysis as anapi
+import json
 import message as msgapi
 import six
+from bika.lims import api
+from pkg_resources import resource_filename
 from pkg_resources import resource_listdir
 from senaite.lis2a import PRODUCT_NAME
 from senaite.lis2a.interpreter import Interpreter
 from senaite.lis2a.interpreter import lis2a2
-
-from bika.lims import api
 
 try:
     # SENAITE.QUEUE might or not might be installed
@@ -78,35 +78,34 @@ def queue_import(messages):
     return queueapi.add_task(QUEUE_TASK_ID, context, **params)
 
 
-def import_message(message, interpreter=None):
-    """Imports the result from the LIS2-A compliant message passed-in
+def import_message(message):
+    """Imports the data from the LIS2-A compliant message passed-in
     :param message: str representing a full LIS2-A compliant message
-    """
-    # Get the results data dicts
-    data = extract_results(message, interpreter=interpreter)
-
-    # Try to import the results. At least one result should be imported
-    return any(map(anapi.import_result, data))
-
-
-def extract_results(message, interpreter=None):
-    """Returns a list of result data dicts. A given message can contain multiple
-    records from (R)esult type, so it returns a list of dicts, and each dict
-    represents a potential results for a single test
     """
     # The message might be composite. This is, a single message can contain
     # results for more than one sample
     if msgapi.is_composite(message):
-        messages = msgapi.split_message(message)
-        results = map(lambda m: extract_results(m, interpreter), messages)
-        return list(itertools.chain.from_iterable(results))
+        msgs = msgapi.split_message(message)
+        return any(map(import_message, msgs))
 
+    # Look for a suitable interpreter
+    interpreter = get_interpreter_for(message)
     if not interpreter:
-        # Look for a suitable interpreter
-        interpreter = get_interpreter_for(message)
-        if not interpreter:
-            raise ValueError("No interpreter found for {}".format(message))
+        raise ValueError("No interpreter found for {}".format(message))
 
+    # Extract and import (R)esults
+    results = extract_results(message, interpreter)
+    imported = any(map(anapi.import_result, results))
+
+    # Extract and import other data
+    return imported
+
+
+def extract_results(message, interpreter):
+    """Returns a list of result data dicts. A given message can contain multiple
+    records from (R)esult type, so it returns a list of dicts, and each dict
+    represents a potential results for a single test
+    """
     interpreter.read(message)
     results_data = interpreter.get_results_data()
     interpreter.close()
@@ -136,8 +135,10 @@ def get_interpreters():
     """Returns the result import definitions available in the system
     """
     # Get JSON configuration files from resources dir
+    base_dir = resource_filename(PRODUCT_NAME, "resources")
     files = resource_listdir(PRODUCT_NAME, "resources")
     files = filter(lambda file_name: file_name.endswith(".json"), files)
+    files = map(lambda file: join(base_dir, file), files)
 
     # Get the interpreters
     interpreters = map(get_interpreter_from_json, files)

@@ -52,6 +52,7 @@ def import_result(data):
     ids passed-in, together with any of the keywords passed-in.
     """
     ids = data.get("id")
+    ids = list(set(ids))
     keywords = data.get("keyword")
     if not all([ids, keywords]):
         logger.error("id or keyword are missing or empty")
@@ -62,7 +63,8 @@ def import_result(data):
     if not analysis:
         logger.error("no match found for ids {} and keywords {}"
                      .format(repr(ids), repr(keywords)))
-        return False
+        raise ValueError("No analysis found for IDs '{}' and keywords '{}'"
+                         .format(repr(ids), repr(keywords)))
 
     # Get the original result for later comparison
     original_result = analysis.getResult()

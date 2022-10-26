@@ -18,6 +18,9 @@
 # Copyright 2020 by it's authors.
 # Some rights reserved, see README and LICENSE.
 
+import os
+
+from os.path import splitext
 from os.path import isfile
 from os.path import join
 
@@ -28,6 +31,7 @@ import six
 from bika.lims import api
 from pkg_resources import resource_filename
 from pkg_resources import resource_listdir
+from plone.resource.utils import iterDirectoriesOfType
 from senaite.lis2a import PRODUCT_NAME
 from senaite.lis2a.interpreter import Interpreter
 from senaite.lis2a.interpreter import lis2a2
@@ -42,6 +46,9 @@ except Exception:
 
 # ID of the results import task for the queue
 QUEUE_TASK_ID = "task_senaite_lis2a_import"
+
+# ID of the type of resources directory containing interpreters
+INTERPRETERS_RESOURCE_TYPE = "senaite.lis2a.interpreters"
 
 
 _marker = object()
@@ -134,14 +141,8 @@ def get_interpreter_for(message, default=None):
 def get_interpreters():
     """Returns the result import definitions available in the system
     """
-    # Get JSON configuration files from resources dir
-    base_dir = resource_filename(PRODUCT_NAME, "resources")
-    files = resource_listdir(PRODUCT_NAME, "resources")
-    files = filter(lambda file_name: file_name.endswith(".json"), files)
-    files = map(lambda file: join(base_dir, file), files)
-
-    # Get the interpreters
-    interpreters = map(get_interpreter_from_json, files)
+    # Get the interpreters available as JSON files from resources dirs
+    interpreters = get_resources_interpreters()
 
     # Extend with built-in interpreters
     builtin = get_builtin_interpreters()
@@ -158,6 +159,30 @@ def get_interpreter(id):
     if len(interpreter) > 1:
         raise ValueError("More than one interpreter found for '{}'".format(id))
     return interpreter and interpreter[0] or None
+
+
+def get_resources_interpreters():
+    """Returns the interpreters present in resources folders
+    """
+    interpreters = []
+    extensions = [".json"]
+
+    # walk-through all lis2a resources folder registered
+    for resource in iterDirectoriesOfType(INTERPRETERS_RESOURCE_TYPE):
+
+        for content in resource.listDirectory():
+
+            # only interested on JSON files
+            basename, ext = splitext(content)
+            if ext not in extensions:
+                continue
+
+            # create an interpreter instance
+            path = os.path.join(resource.directory, content)
+            interpreter = get_interpreter_from_json(path)
+            interpreters.append(interpreter)
+
+    return interpreters
 
 
 def get_builtin_interpreters():

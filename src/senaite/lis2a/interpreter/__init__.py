@@ -218,11 +218,13 @@ class Interpreter(dict):
         If the expected value is a list, it will return True if the list
         contains the value
         """
+        if value is None:
+            value = ""
         if expected_value is None:
             expected_value = ""
         if isinstance(expected_value, six.string_types):
-            expected_value = [expected_value, ]
-        return value in expected_value
+            expected_value = [expected_value.strip(), ]
+        return value.strip() in expected_value
 
     def find_result_records(self):
         """Return the result records that match with the result_criteria

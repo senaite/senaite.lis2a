@@ -135,6 +135,7 @@ def get_interpreter_for(message, default=None):
     for interpreter in get_interpreters():
         if interpreter.supports(message):
             return interpreter
+
     return default
 
 

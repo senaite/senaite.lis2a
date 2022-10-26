@@ -166,7 +166,7 @@ class Interpreter(dict):
             # value is a list, the value must match with at least one of the
             # expected values
             matches = map(lambda v: self.match(v, expected_value), values)
-            supported = all(matches)
+            supported = matches and all(matches)
             if not supported:
                 break
 

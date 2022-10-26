@@ -45,11 +45,12 @@ class Interpreter(dict):
 
         # Make a deep copy to not mess things around
         kw = copy.deepcopy(base_configuration)
+        conf = copy.deepcopy(configuration)
         for key in "HPORCQLSM":
             values = kw.pop(key, {})
-            values.update(configuration.pop(key, {}))
+            values.update(conf.pop(key, {}))
             kw[key] = values
-        kw.update(configuration)
+        kw.update(conf)
         super(Interpreter, self).__init__(**kw)
 
         self.message = None

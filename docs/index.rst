@@ -31,6 +31,7 @@ Table of Contents:
    :maxdepth: 2
 
    installation
+   interpreters
    changelog
 
 

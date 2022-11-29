@@ -18,6 +18,8 @@
 # Copyright 2020 by it's authors.
 # Some rights reserved, see README and LICENSE.
 
+import six
+
 from DateTime import DateTime
 from senaite.lis2a import logger
 
@@ -30,6 +32,8 @@ from bika.lims.catalog import CATALOG_ANALYSIS_REQUEST_LISTING
 from bika.lims.catalog import CATALOG_WORKSHEET_LISTING
 from bika.lims.interfaces import IAnalysisRequest
 from bika.lims.interfaces import IWorksheet
+
+_marker = object()
 
 
 def import_result(data):
@@ -80,6 +84,16 @@ def import_result(data):
             analysis.setInterimFields(interim_fields)
             analysis.calculateResult(override=True)
 
+    # store results ranges if necessary
+    ranges = data.get("ranges", None)
+    ranges = to_results_range(ranges, default=None)
+    if ranges:
+        ranges.update({
+            "uid": api.get_uid(analysis),
+            "keyword": analysis.getKeyword(),
+        })
+        analysis.setResultsRange(ranges)
+
     # If no result has been calculated, set the result directly
     result = stringify(data["result"])
     if result and analysis.getResult() == original_result:
@@ -105,6 +119,63 @@ def import_result(data):
         wf.doActionFor(analysis, "submit")
 
     return True
+
+
+def to_results_range(value, default=_marker):
+    """Converts the value to a valid results range dict
+    """
+    if not isinstance(value, six.string_types):
+        if default is _marker:
+            raise TypeError("Not supported type")
+        return default
+
+    # e.g. [.58 - 1.59]
+    values = [val.strip() for val in value.split("-")]
+    values = filter(None, values)
+    if len(values) != 2:
+        if default is _marker:
+            raise ValueError("Not a valid result range: {}".format(value))
+        return default
+
+    min_value = values[0][1:]
+    if not api.is_floatable(min_value):
+        if default is _marker:
+            raise ValueError("Not a valid result range: {}".format(value))
+        return default
+
+    max_value = values[1][:-1]
+    if not api.is_floatable(max_value):
+        if default is _marker:
+            raise ValueError("Not a valid result range: {}".format(value))
+        return default
+
+    min_operators = {"[": "qeq", "(": "gt"}
+    min_operator = min_operators.get(values[0][:1])
+    if not min_operator:
+        if default is _marker:
+            raise ValueError("Not a valid result range: {}".format(value))
+        return default
+
+    max_operators = {"]": "leq", ")": "lt"}
+    max_operator = max_operators.get(values[1][-1:])
+    if not max_operator:
+        if default is _marker:
+            raise ValueError("Not a valid result range: {}".format(value))
+        return default
+
+    min_value = api.to_float(min_value)
+    max_value = api.to_float(max_value)
+    if min_value > max_value:
+        if default is _marker:
+            raise ValueError("Not a valid result range: {}".format(value))
+        return default
+
+    return {
+        "min": min_value,
+        "max": max_value,
+        "min_operator": min_operator,
+        "max_operator": max_operator,
+    }
 
 
 def is_detection_limit(result):

@@ -67,8 +67,7 @@ def import_result(data):
     if not analysis:
         logger.error("no match found for ids {} and keywords {}"
                      .format(repr(ids), repr(keywords)))
-        raise ValueError("No analysis found for IDs {} and keywords {}"
-                         .format(repr(ids), repr(keywords)))
+        return False
 
     # Get the original result for later comparison
     original_result = analysis.getResult()

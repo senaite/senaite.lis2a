@@ -32,7 +32,7 @@ try:
     from senaite.queue.interfaces import IQueuedTaskAdapter
     from senaite.queue import api as queueapi
     from senaite.queue.queue import get_chunks_for
-except:
+except Exception:
     IQueuedTaskAdapter = Interface
     queueapi = None
 

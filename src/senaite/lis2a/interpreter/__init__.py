@@ -22,7 +22,6 @@ import copy
 import itertools
 from datetime import datetime
 
-import lis2a2
 import six
 from senaite.lis2a.api import message as msgapi
 
@@ -402,7 +401,7 @@ class Interpreter(dict):
 
         try:
             return datetime.strptime(ansi_str, date_format)
-        except:
+        except Exception:
             if default is _marker:
                 raise ValueError("No ANSI format date")
             return default

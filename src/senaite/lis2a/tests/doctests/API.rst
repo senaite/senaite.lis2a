@@ -5,7 +5,7 @@ LIS2A API
 
 Running this test from the buildout directory:
 
-    bin/test test_textual_doctests -t API
+    bin/test test_textual_doctests -m senaite.lis2a -t API
 
 Test Setup
 ~~~~~~~~~~
@@ -124,7 +124,8 @@ Extracting results from a message
 We can directly extract the results from a message:
 
     >>> message = utils.read_file("example_lis2a2_01.txt")
-    >>> results = api.extract_results(message)
+    >>> interpreter = api.get_interpreter_for(message)
+    >>> results = api.extract_results(message, interpreter)
 
 And we get one result for each (R)esult record, with the rest of result records
 as interim fields:

@@ -22,17 +22,13 @@ import os
 
 from os.path import splitext
 from os.path import isfile
-from os.path import join
 
 import analysis as anapi
 import json
 import message as msgapi
 import six
 from bika.lims import api
-from pkg_resources import resource_filename
-from pkg_resources import resource_listdir
 from plone.resource.utils import iterDirectoriesOfType
-from senaite.lis2a import PRODUCT_NAME
 from senaite.lis2a.interpreter import Interpreter
 from senaite.lis2a.interpreter import lis2a2
 

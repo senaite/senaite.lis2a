@@ -7,7 +7,7 @@ from serial devices to this endpoint each time a transfer phase is completed.
 
 Running this test from the buildout directory:
 
-    bin/test test_textual_doctests -t PushConsumer
+    bin/test test_textual_doctests -m senaite.lis2a -t PushConsumer
 
 Test Setup
 ~~~~~~~~~~
@@ -23,8 +23,10 @@ Needed imports:
     >>> from plone.app.testing import setRoles
     >>> from plone.app.testing import TEST_USER_ID
     >>> from senaite.lis2a import api
+    >>> from senaite.jsonapi.interfaces import IPushConsumer
     >>> from senaite.lis2a.interpreter import Interpreter
     >>> from senaite.lis2a.tests import utils
+    >>> from zope.component import queryAdapter
 
 Variables:
 
@@ -49,9 +51,8 @@ Create some basic objects for the test:
     >>> transaction.commit()
 
 
-Send messages via push
-~~~~~~~~~~~~~~~~~~~~~~~
-
+Ensure adapter is available
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
     >>> messages = [
     ...     utils.read_file("example_lis2a2_01.txt"),
     ...     utils.read_file("example_lis2a2_02.txt"),
@@ -60,8 +61,12 @@ Send messages via push
     ...     "consumer": "senaite.lis2a.import",
     ...     "messages": messages,
     ... }
-    >>> post("push", payload)
-    '..."success": true...'
+    >>> consumer = queryAdapter(payload, IPushConsumer, name="senaite.lis2a.import")
+    >>> consumer is not None
+    True
+
+Send messages via push
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Now, try to send messages with valid sample ids and keywords. Create two
 samples and receive them first:

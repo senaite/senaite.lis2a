@@ -196,3 +196,14 @@ def get_interpreter_from_json(str_or_file):
         with open(str_or_file, "r") as f:
             str_or_file = f.read()
     return Interpreter(json.loads(str_or_file))
+
+
+def extract_queries(message, interpreter):
+    """Returns a list of query dicts. A given message can contain multiple
+    queries, so it returns a list of dicts, and each dict
+    represents a query
+    """
+    interpreter.read(message)
+    query_data = interpreter.get_queries_data()
+    interpreter.close()
+    return query_data

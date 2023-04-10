@@ -119,6 +119,13 @@ class Interpreter(dict):
     def get_record_value(self, key, record):
         """Returns the value for the key passed-in from the record, if any
         """
+        # Get the key of the record to look at
+        record_type = self.get_record_type(key)
+
+        # Ensure the record type if the key matches the record type
+        if not record.startswith(record_type):
+            return
+
         delimiters = {
             "field_delimiter": self.field_delimiter,
             "component_delimiter": self.component_delimiter,
@@ -206,7 +213,8 @@ class Interpreter(dict):
         for key, expected_value in self.result_criteria.items():
 
             if self.get_record_type(key) != "R":
-                raise ValueError("Records other than Result are not supported")
+                # Records other than Result are not supported here
+                continue
 
             # Get the real value from the record
             value = self.get_record_value(key, record)
@@ -405,3 +413,96 @@ class Interpreter(dict):
             if default is _marker:
                 raise ValueError("No ANSI format date")
             return default
+
+    def find_query_records(self):
+        """Return the query records that match with the result_criteria
+        """
+        query_records = msgapi.get_records(self.message, "Q")
+        return filter(self.check_query_criteria, query_records)
+
+    def get_queries_data(self):
+        """Returns a list of dicts containing the query data information to
+        store from the message passed-in based on the configuration set for this
+        interpreter.
+        """
+        # Extract the query records that match with the result_criteria
+        query_records = self.find_query_records()
+        if not query_records:
+            return {}
+
+        querys_data = []
+        for record in query_records:
+
+            # Generate the query data dict
+            data = self.to_query_data(record)
+            if data:
+                # Append to the list of querys data
+                querys_data.append(data)
+
+        return querys_data
+
+    def check_query_criteria(self, record):
+        """Returns whether the record passed in matches with the query
+           criteria specified by this interpreter
+        """
+        if not self.result_criteria:
+            raise ValueError("No query criteria set")
+
+        # The interpreter can handle the record if all criteria are met
+        for key, expected_value in self.result_criteria.items():
+
+            if self.get_record_type(key) != "Q":
+                # Records other than Result are not supported here
+                continue
+
+            # Get the real value from the record
+            value = self.get_record_value(key, record)
+
+            # Check if value matches with the expected value
+            if not self.match(value, expected_value):
+                return False
+
+        return True
+
+    def get_sequnce_number(self, record):
+        sequence_num = self.get_mapped_values("id", record)
+        if sequence_num:
+            sequence_num = sequence_num[0]
+        return sequence_num
+
+    def get_patient_id(self, record):
+        patient_id = self.get_mapped_values("patient_id", record)
+        if patient_id:
+            patient_id = patient_id[0]
+        return patient_id
+
+    def get_specimen_id(self, record):
+        specimen_id = self.get_mapped_values("specimen_id", record)
+        if specimen_id:
+            specimen_id = specimen_id[0]
+        return specimen_id
+
+    def to_query_data(self, record):
+        """Returns a dict representing the query data information
+        """
+
+        def resolve_query_mappings(record):
+            sequence_num = self.get_sequnce_number(record)
+            patient_id = self.get_patient_id(record)
+            specimen_id = self.get_specimen_id(record)
+            return {
+                "id": sequence_num,
+                "patient_id": patient_id,
+                "specimen_id": specimen_id,
+            }
+
+        # Resolve mappings for result
+        data = resolve_query_mappings(record)
+
+        # id and keyword are required
+        if not all([data["id"]]) and not any([data["patient_id"], data["specimen_id"]]):
+            return {}
+
+        # Inject additional options (e.g. remove_interims)
+        data.update(self.get("options", {}))
+        return data

@@ -30,7 +30,6 @@ Create some basic objects for the test:
     >>> setRoles(portal, TEST_USER_ID, ["LabManager", "Manager"])
     >>> utils.setup_baseline_data(portal)
 
-
 Retrieve built-in interpreters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
@@ -212,3 +211,27 @@ If we try to reimport the same message, nothing happens:
 
     >>> api.import_message(message)
     False
+
+Extracting query from a message
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We can directly extract the query from a message:
+
+    >>> message = """
+    ... H|\^&||||||||||P|LIS2-A2|19890327141200
+    ... Q|1|^2345||||20160315161239|||||O
+    ... L|1|N
+    ... """
+    >>> interpreter = api.get_interpreter_for(message)
+    >>> queries = api.extract_queries(message, interpreter)
+
+And we get one result for each (R)esult record, with the rest of result records
+as interim fields:
+
+    >>> len(queries)
+    1
+    >>> query = queries[0]
+    >>> query["id"]
+    '1'
+    >>> '2345' in query["specimen_id"]
+    True

@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 
+from Products.CMFPlone.utils import get_installer
 from senaite.lis2a import PRODUCT_NAME
 from senaite.lis2a.tests.base import SimpleTestCase
 
@@ -9,7 +10,7 @@ class TestSetup(SimpleTestCase):
     """
 
     def test_is_senaite_lis2a_installed(self):
-        qi = self.portal.portal_quickinstaller
+        qi = get_installer(self.portal)
         self.assertTrue(qi.isProductInstalled(PRODUCT_NAME))
 
 

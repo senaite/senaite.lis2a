@@ -64,6 +64,8 @@ Ensure adapter is available
     >>> consumer = queryAdapter(payload, IPushConsumer, name="senaite.lis2a.import")
     >>> consumer is not None
     True
+    >>> post("push", payload)
+    '..."success": true...'
 
 Send messages via push
 ~~~~~~~~~~~~~~~~~~~~~~~

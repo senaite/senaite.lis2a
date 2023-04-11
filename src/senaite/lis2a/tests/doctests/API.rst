@@ -219,7 +219,7 @@ We can directly extract the query from a message:
 
     >>> message = """
     ... H|\^&||||||||||P|LIS2-A2|19890327141200
-    ... Q|1|^2345|||||||||O
+    ... Q|1|^2345||ALL^^^|||||||O
     ... L|1|N
     ... """
     >>> interpreter = api.get_interpreter_for(message)
@@ -233,4 +233,6 @@ And we get one query for the details of a sample:
     >>> query["id"]
     '1'
     >>> '2345' in query["specimen_id"]
+    True
+    >>> 'ALL' in query["keyword"]
     True

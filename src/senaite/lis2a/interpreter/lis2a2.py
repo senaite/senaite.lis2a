@@ -48,6 +48,9 @@ CONFIGURATION = {
             "R.UniversalTestID",
             "R.UniversalTestID_Name",
             "R.UniversalTestID_ManufacturerCode",
+            "Q.UniversalTestID",
+            "Q.UniversalTestID_Name",
+            "Q.UniversalTestID_ManufacturerCode",
         ],
         "result": "R.Measurement",
         "capture_date": "R.DateTimeStarted",
@@ -527,7 +530,22 @@ CONFIGURATION = {
         # by repeat delimiters, or the field may contain the text ALL, which signifies a request for all results on all
         # tests or batteries for the patients/specimens/tests defined in Sections 11.3 and 11.4 and within the dates
         # described in Sections 11.6 and 11.7.
-        "UniversalTestID": 4,
+        # This field shall use universal test ID as described in Section 5.6.1.
+        "UniversalTestID": (4, 0),
+        # The test or battery name associated with the universal test ID code
+        # described above
+        "UniversalTestID_Name": (4, 1),
+        # In the case where multiple national or international coding schemes
+        # exist, this field may be used to determine what coding scheme is
+        # employed in the test ID and test ID name fields
+        "UniversalTestID_Type": (4, 2),
+        # This code may be a number, characters, or a multiple test designator
+        # based on manufacturer-defined delimiters (that is, AK.23.34-B).
+        # Extensions or qualifiers to this code may be followed by subsequent
+        # component fields which must be defined and documented by the
+        # manufacturer. For example, this code may represent a three-part
+        # identifier such as -Dilution^Diluent^Description
+        "UniversalTestID_ManufacturerCode": (4, 3),
         # 11.6 Nature of Request Time Limits
         # Specify whether the date and time limits specified in Sections 11.7 and 11.8 refer to the specimen collect
         # or ordered date (see Section 8.4.8) or test date (see Section 8.4.23): S indicates the specimen collect date;
@@ -575,8 +593,23 @@ CONFIGURATION = {
     },
 
     # TODO Message Terminator Record. See section 12
-    "L": {},
-
+    "L": {
+        # 12.2 Sequence Number
+        # This field is as described in Section 5.6.7. (For this record type, the value of this field should always be
+        # 1.)
+        "SequenceNumber": 1,
+        # 12.3 Termination Code
+        # This field provides an explanation of the end of the session.
+        # Nil, N: normal termination
+        # T: sender aborted
+        # R: receiver requested abort
+        # E: unknown system error
+        # Q: error in last request for information
+        # I: no information available from last query
+        # F: last request for information processed
+        # NOTE: I or Q will terminate a request and allow processing of a new request record.
+        "TerminationCode": 2
+    },
     # TODO Scientific Record. See section 13
     "S": {},
 

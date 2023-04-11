@@ -487,13 +487,11 @@ class Interpreter(dict):
         """
 
         def resolve_query_mappings(record):
-            sequence_num = self.get_sequnce_number(record)
-            patient_id = self.get_patient_id(record)
-            specimen_id = self.get_specimen_id(record)
             return {
-                "id": sequence_num,
-                "patient_id": patient_id,
-                "specimen_id": specimen_id,
+                "id": self.get_sequnce_number(record),
+                "patient_id": self.get_patient_id(record),
+                "specimen_id": self.get_specimen_id(record),
+                "keyword": self.get_analysis_keywords(record),
             }
 
         # Resolve mappings for result

@@ -219,14 +219,13 @@ We can directly extract the query from a message:
 
     >>> message = """
     ... H|\^&||||||||||P|LIS2-A2|19890327141200
-    ... Q|1|^2345||||20160315161239|||||O
+    ... Q|1|^2345|||||||||O
     ... L|1|N
     ... """
     >>> interpreter = api.get_interpreter_for(message)
     >>> queries = api.extract_queries(message, interpreter)
 
-And we get one result for each (R)esult record, with the rest of result records
-as interim fields:
+And we get one query for the details of a sample:
 
     >>> len(queries)
     1

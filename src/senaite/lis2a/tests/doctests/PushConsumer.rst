@@ -108,6 +108,23 @@ And both samples are now in "to_be_verified" status:
     ['to_be_verified', 'to_be_verified']
 
 
+Send message via push to query a sample
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Propare a query message
+
+    >>> message = """
+    ... H|\^&||||||||||P|LIS2-A2|19890327141200
+    ... Q|1|^2345|||||||||O
+    ... L|1|N
+    ... """
+    >>> payload = {
+    ...     "consumer": "senaite.lis2a.import",
+    ...     "messages": message,
+    ... }
+    >>> post("push", payload)
+    '..."success": true...'
+
 .. Links
 
 .. _senaite.lis2a: https://pypi.python.org/pypi/senaite.lis2a

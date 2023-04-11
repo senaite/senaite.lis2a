@@ -556,7 +556,7 @@ CONFIGURATION = {
         "UserFieldNumber1": 10,
         # 11.12 User Field Number 2
         # User Field Number 2
-        "UserFieldNumber1": 10,
+        "UserFieldNumber2": 10,
         # 11.13 Request Information Status Codes
         # The following codes shall be used:
         # C: correction of previously transmitted results

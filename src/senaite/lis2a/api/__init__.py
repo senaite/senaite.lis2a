@@ -29,6 +29,7 @@ import message as msgapi
 import six
 from bika.lims import api
 from plone.resource.utils import iterDirectoriesOfType
+from senaite.lis2a import logger
 from senaite.lis2a.interpreter import Interpreter
 from senaite.lis2a.interpreter import lis2a2
 
@@ -206,4 +207,5 @@ def extract_queries(message, interpreter):
     interpreter.read(message)
     query_data = interpreter.get_queries_data()
     interpreter.close()
+    logger.info('extract_queries returns {}'.format(query_data))
     return query_data

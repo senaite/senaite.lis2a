@@ -22,6 +22,7 @@ import six
 from Products.CMFCore.interfaces import IContentish
 from senaite.jsonapi.interfaces import IPushConsumer
 from senaite.lis2a import api as _api
+from senaite.lis2a import logger
 from senaite.lis2a.api import message as msgapi
 from zope.component import adapts
 from zope.interface import implements
@@ -43,6 +44,7 @@ class PushConsumer(object):
     implements(IPushConsumer)
 
     def __init__(self, data):
+        logger.info("PushConsumer: init with data {}".format(data))
         self.data = data
 
     def process(self):
@@ -57,6 +59,7 @@ class PushConsumer(object):
         if not messages:
             raise ValueError("No messages found: {}".format(repr(self.data)))
 
+        logger.info("PushConsumer: process message {}".format(messages))
         # Just in case we got a message instead of a list of messages
         if isinstance(messages, six.string_types):
             messages = (messages,)
@@ -80,6 +83,7 @@ class PushConsumer(object):
         # returns True if found a match in SENAITE and succeed on the result
         # import. It might happen there is no object in SENAITE matching with
         # the message we are trying to import.
+        logger.info("PushConsumer: process complete")
         return True
 
 

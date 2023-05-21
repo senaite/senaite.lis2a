@@ -26,6 +26,7 @@ from os.path import isfile
 import analysis as anapi
 import json
 import message as msgapi
+import query as query_api
 import six
 from bika.lims import api
 from plone.resource.utils import iterDirectoriesOfType
@@ -97,12 +98,19 @@ def import_message(message):
     if not interpreter:
         raise ValueError("No interpreter found for {}".format(message))
 
+    # Determine if resuls or query
     # Extract and import (R)esults
     results = extract_results(message, interpreter)
-    imported = any(map(anapi.import_result, results))
-
-    # Extract and import other data
-    return imported
+    if results:
+        imported = any(map(anapi.import_result, results))
+        # Extract and import other data
+        logger.info('Imported results: {}'.format(imported))
+        return imported
+    results = extract_queries(message, interpreter)
+    if results:
+        processed = query_api.process_query(results)
+        logger.info('Processed query: {}'.format(processed))
+        return processed
 
 
 def extract_results(message, interpreter):
@@ -204,6 +212,7 @@ def extract_queries(message, interpreter):
     queries, so it returns a list of dicts, and each dict
     represents a query
     """
+    logger.info('extract_queries message in: {}'.format(message))
     interpreter.read(message)
     query_data = interpreter.get_queries_data()
     interpreter.close()

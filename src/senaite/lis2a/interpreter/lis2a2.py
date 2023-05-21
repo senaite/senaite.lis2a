@@ -32,6 +32,7 @@ CONFIGURATION = {
     # Criteria used by the interpreter to determine the results to consider
     "result_criteria": {
         "R.ResultStatus": ["", "C", "P", "F", "R", "N"],
+        "Q.QueryStatus": ["", "O"],
     },
 
     # Mappings between result_data dict fields and message fields. Used by the
@@ -40,19 +41,25 @@ CONFIGURATION = {
     "mappings": {
         "id": [
             "O.SpecimenID",
-            "O.InstrumentSpecimenID"
+            "O.InstrumentSpecimenID",
+            "Q.SequenceNumber",
         ],
         "keyword": [
             "R.UniversalTestID",
             "R.UniversalTestID_Name",
             "R.UniversalTestID_ManufacturerCode",
+            "Q.UniversalTestID",
+            "Q.UniversalTestID_Name",
+            "Q.UniversalTestID_ManufacturerCode",
         ],
         "result": "R.Measurement",
         "capture_date": "R.DateTimeStarted",
         "captured_by": [
             "R.OperatorIdentification",
             "R.VerifierIdentification"
-        ]
+        ],
+        "patient_id": "Q.StartingRangePatientID",
+        "specimen_id": "Q.StartingRangeSpecimenID",
     },
 
     # Header Record. See LIS2-A2 Section 6
@@ -496,14 +503,115 @@ CONFIGURATION = {
     # TODO Comment Record. See section 10
     "C": {},
 
-    # TODO Request Information Record. See section 11
-    "Q": {},
+    # Request Information Record. See section 11
+    "Q": {
+        # See Section 5.6.7
+        # 11.2 Sequence Number
+        # This is a required field used in record types that may occur multiple times within a single message. The
+        # number used defines the i'th occurrence of the associated record type at a particular hierarchical level and
+        # is reset to one whenever a record of a greater hierarchical significance (lower number) is transmitted or if
+        # the same record is used at a different hierarchical level (e.g., comment records).
+        "SequenceNumber": 1,
+        # 11.3 Starting Range ID Number
+        # This field may contain three or more components to define a range of patients/specimens/manufacturers
+        # selection criteria. The first component is the information system patient ID number. The second
+        # component is the information system specimen ID number. Any further components are manufacturer-
+        # defined and for use in request subresult information. These components are position dependent. A list of sample IDs
+        # could be requested by the use of the repeat delimiter to separate IDs.
+        "StartingRangePatientID": (2, 0),
+        "StartingRangeSpecimenID": (2, 1),
+        "StartingRangeManufacturerSpecific": (2, 2),
+        # 11.4 Ending Range ID Number
+        # This field is similar to that described in Section 11.3. If a single result or specimen demographic or test
+        # order is being requested, then this field may be left blank.
+        "EndingRangeIDNumber": 3,
+        # 11.5 Universal Test ID
+        # This field is as described in Section 5.6.1. This field may alternatively contain multiple codes separated
+        # by repeat delimiters, or the field may contain the text ALL, which signifies a request for all results on all
+        # tests or batteries for the patients/specimens/tests defined in Sections 11.3 and 11.4 and within the dates
+        # described in Sections 11.6 and 11.7.
+        # This field shall use universal test ID as described in Section 5.6.1.
+        "UniversalTestID": (4, 0),
+        # The test or battery name associated with the universal test ID code
+        # described above
+        "UniversalTestID_Name": (4, 1),
+        # In the case where multiple national or international coding schemes
+        # exist, this field may be used to determine what coding scheme is
+        # employed in the test ID and test ID name fields
+        "UniversalTestID_Type": (4, 2),
+        # This code may be a number, characters, or a multiple test designator
+        # based on manufacturer-defined delimiters (that is, AK.23.34-B).
+        # Extensions or qualifiers to this code may be followed by subsequent
+        # component fields which must be defined and documented by the
+        # manufacturer. For example, this code may represent a three-part
+        # identifier such as -Dilution^Diluent^Description
+        "UniversalTestID_ManufacturerCode": (4, 3),
+        # 11.6 Nature of Request Time Limits
+        # Specify whether the date and time limits specified in Sections 11.7 and 11.8 refer to the specimen collect
+        # or ordered date (see Section 8.4.8) or test date (see Section 8.4.23): S indicates the specimen collect date;
+        # R indicates the result test date. If nothing is entered, the date criteria are assumed to be the result test date.
+        "NatureOfRequestTimeLimits": 5,
+        # 11.7 Beginning Request Results Date and Time
+        # This field shall represent either a beginning (oldest) date and time for which results are being requested or
+        # a single date and time. The field may contain a single date and time or multiple dates and times separated
+        # by repeat delimiters. Each date and time shall be represented as specified in Section 5.6.2.
+        # If no date and time is included, the instrument should assume that the information system wants results
+        # going as far into the past as possible and consistent with the criteria specified in other fields.
+        "BeginningRequestResultsDateTime": 6,
+        # 11.8 Ending Request Results Date and Time
+        # This field, if not null, specifies the ending or latest (or most recent) date and time for which results are
+        # being requested. Date and time shall be represented as in Section 5.6.2.
+        "EndingRequestResultsDateTime": 7,
+        # 11.9 Requesting Physician Name
+        # This field identifies the individual physician requesting the results. The identity of the requesting
+        # physician is recorded as specified in Section 5.6.6.
+        "RequestingPhysicianName": 8,
+        # 11.10 Requesting Physician Telephone Number
+        # This field is as specified in Section 5.6.3.
+        "RequestingPhysicianTelephoneNumber": 9,
+        # 11.11 User Field Number 1
+        # This is a user-defined field.
+        "UserFieldNumber1": 10,
+        # 11.12 User Field Number 2
+        # User Field Number 2
+        "UserFieldNumber2": 10,
+        # 11.13 Request Information Status Codes
+        # The following codes shall be used:
+        # C: correction of previously transmitted results
+        # P: preliminary results
+        # F: final results
+        # X: results cannot be done, request cancelled
+        # I: request results pending
+        # S: request partial/unfinalized results
+        # M: result is an MIC level
+        # R: this result was previously transmitted
+        # A: abort/cancel last request criteria (allows a new request to follow)
+        # N: requesting new or edited results only
+        # O: requesting test orders and demographics only (no results)
+        # D: requesting demographics only (e.g., patient record)
+        "QueryStatus": 11
+    },
 
     # TODO Message Terminator Record. See section 12
-    "L": {},
-
+    "L": {
+        # 12.2 Sequence Number
+        # This field is as described in Section 5.6.7. (For this record type, the value of this field should always be
+        # 1.)
+        "SequenceNumber": 1,
+        # 12.3 Termination Code
+        # This field provides an explanation of the end of the session.
+        # Nil, N: normal termination
+        # T: sender aborted
+        # R: receiver requested abort
+        # E: unknown system error
+        # Q: error in last request for information
+        # I: no information available from last query
+        # F: last request for information processed
+        # NOTE: I or Q will terminate a request and allow processing of a new request record.
+        "TerminationCode": 2
+    },
     # TODO Scientific Record. See section 13
-    "S":  {},
+    "S": {},
 
     # TODO Manufacturer Information Record. See section 14
     "M": {},

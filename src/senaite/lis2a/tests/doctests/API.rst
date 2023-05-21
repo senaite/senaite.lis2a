@@ -5,7 +5,7 @@ LIS2A API
 
 Running this test from the buildout directory:
 
-    bin/test test_textual_doctests -t API
+    bin/test test_textual_doctests -m senaite.lis2a -t API
 
 Test Setup
 ~~~~~~~~~~
@@ -29,7 +29,6 @@ Create some basic objects for the test:
 
     >>> setRoles(portal, TEST_USER_ID, ["LabManager", "Manager"])
     >>> utils.setup_baseline_data(portal)
-
 
 Retrieve built-in interpreters
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -124,7 +123,8 @@ Extracting results from a message
 We can directly extract the results from a message:
 
     >>> message = utils.read_file("example_lis2a2_01.txt")
-    >>> results = api.extract_results(message)
+    >>> interpreter = api.get_interpreter_for(message)
+    >>> results = api.extract_results(message, interpreter)
 
 And we get one result for each (R)esult record, with the rest of result records
 as interim fields:
@@ -211,3 +211,23 @@ If we try to reimport the same message, nothing happens:
 
     >>> api.import_message(message)
     False
+
+Extracting query from a message
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+We can directly extract the query from a message:
+
+    >>> message = """
+    ... H|\^&||||||||||P|LIS2-A2|19890327141200
+    ... Q|1|2^2345||ALL^^^|||||||O
+    ... L|1|N
+    ... """
+    >>> interpreter = api.get_interpreter_for(message)
+    >>> queries = api.extract_queries(message, interpreter)
+
+And we get one query for the details of a sample:
+
+    >>> len(queries)
+    1
+    >>> queries
+    [{'specimen_id': '2345', 'id': '1', 'keyword': ['ALL'], 'patient_id': '2'}]

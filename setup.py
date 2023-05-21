@@ -1,13 +1,12 @@
 from setuptools import setup, find_packages
 
-version = "2.0.0"
+version = "2.0.1"
 
 setup(
     name="senaite.lis2a",
     version=version,
     description="CLIS LIS2-A results import for SENAITE",
-    long_description=open("README.rst").read() + "\n" +
-    open("CHANGES.rst").read() + "\n",
+    long_description=open("README.rst").read() + "\n" + open("CHANGES.rst").read() + "\n",
     # Get more strings from
     # http://pypi.python.org/pypi?:action=list_classifiers
     classifiers=[

@@ -22,17 +22,15 @@ import os
 
 from os.path import splitext
 from os.path import isfile
-from os.path import join
 
 import analysis as anapi
 import json
 import message as msgapi
+import query as query_api
 import six
 from bika.lims import api
-from pkg_resources import resource_filename
-from pkg_resources import resource_listdir
 from plone.resource.utils import iterDirectoriesOfType
-from senaite.lis2a import PRODUCT_NAME
+from senaite.lis2a import logger
 from senaite.lis2a.interpreter import Interpreter
 from senaite.lis2a.interpreter import lis2a2
 
@@ -100,12 +98,19 @@ def import_message(message):
     if not interpreter:
         raise ValueError("No interpreter found for {}".format(message))
 
+    # Determine if resuls or query
     # Extract and import (R)esults
     results = extract_results(message, interpreter)
-    imported = any(map(anapi.import_result, results))
-
-    # Extract and import other data
-    return imported
+    if results:
+        imported = any(map(anapi.import_result, results))
+        # Extract and import other data
+        logger.info('Imported results: {}'.format(imported))
+        return imported
+    results = extract_queries(message, interpreter)
+    if results:
+        processed = query_api.process_query(results)
+        logger.info('Processed query: {}'.format(processed))
+        return processed
 
 
 def extract_results(message, interpreter):
@@ -200,3 +205,16 @@ def get_interpreter_from_json(str_or_file):
         with open(str_or_file, "r") as f:
             str_or_file = f.read()
     return Interpreter(json.loads(str_or_file))
+
+
+def extract_queries(message, interpreter):
+    """Returns a list of query dicts. A given message can contain multiple
+    queries, so it returns a list of dicts, and each dict
+    represents a query
+    """
+    logger.info('extract_queries message in: {}'.format(message))
+    interpreter.read(message)
+    query_data = interpreter.get_queries_data()
+    interpreter.close()
+    logger.info('extract_queries returns {}'.format(query_data))
+    return query_data

@@ -7,7 +7,7 @@ from serial devices to this endpoint each time a transfer phase is completed.
 
 Running this test from the buildout directory:
 
-    bin/test test_textual_doctests -t PushConsumer
+    bin/test test_textual_doctests -m senaite.lis2a -t PushConsumer
 
 Test Setup
 ~~~~~~~~~~
@@ -23,8 +23,10 @@ Needed imports:
     >>> from plone.app.testing import setRoles
     >>> from plone.app.testing import TEST_USER_ID
     >>> from senaite.lis2a import api
+    >>> from senaite.jsonapi.interfaces import IPushConsumer
     >>> from senaite.lis2a.interpreter import Interpreter
     >>> from senaite.lis2a.tests import utils
+    >>> from zope.component import queryAdapter
 
 Variables:
 
@@ -49,9 +51,8 @@ Create some basic objects for the test:
     >>> transaction.commit()
 
 
-Send messages via push
-~~~~~~~~~~~~~~~~~~~~~~~
-
+Ensure adapter is available
+~~~~~~~~~~~~~~~~~~~~~~~~~~~
     >>> messages = [
     ...     utils.read_file("example_lis2a2_01.txt"),
     ...     utils.read_file("example_lis2a2_02.txt"),
@@ -60,8 +61,14 @@ Send messages via push
     ...     "consumer": "senaite.lis2a.import",
     ...     "messages": messages,
     ... }
+    >>> consumer = queryAdapter(payload, IPushConsumer, name="senaite.lis2a.import")
+    >>> consumer is not None
+    True
     >>> post("push", payload)
     '..."success": true...'
+
+Send messages via push
+~~~~~~~~~~~~~~~~~~~~~~~
 
 Now, try to send messages with valid sample ids and keywords. Create two
 samples and receive them first:
@@ -100,6 +107,23 @@ And both samples are now in "to_be_verified" status:
     >>> map(_api.get_review_status, samples)
     ['to_be_verified', 'to_be_verified']
 
+
+Send message via push to query a sample
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Propare a query message
+
+    >>> message = """
+    ... H|\^&||||||||||P|LIS2-A2|19890327141200
+    ... Q|1|^2345||ALL^^^|||||||O
+    ... L|1|N
+    ... """
+    >>> payload = {
+    ...     "consumer": "senaite.lis2a.import",
+    ...     "messages": message,
+    ... }
+    >>> post("push", payload)
+    '..."success": true...'
 
 .. Links
 
